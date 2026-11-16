@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>게임 아케이드</title>
+<style>
+  :root { --bg: #070816; --fg: #eef1ff; --muted: #9aa3c7; --card: #11142b; --line: #262b52; --gold: #ffd166; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font-family: system-ui, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  body { background: radial-gradient(ellipse at 50% -10%, #1d2260 0%, var(--bg) 60%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 16px 32px; }
+  h1 { margin: 0; font-size: clamp(34px, 7vw, 56px); font-weight: 900; letter-spacing: 2px;
+       background: linear-gradient(90deg, #5ee7ff, #ff4fa3, #ffd166); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: var(--muted); margin: 8px 0 36px; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 260px)); gap: 20px; width: 100%; justify-content: center; }
+  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 420px); } }
+  a.card { display: flex; flex-direction: column; text-decoration: none; color: inherit; background: var(--card); border: 2px solid var(--line);
+           border-radius: 18px; overflow: hidden; transition: transform .15s, border-color .15s, box-shadow .15s; outline: none; }
+  a.card:hover, a.card.sel { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 10px 40px -10px var(--accent); }
+  .card canvas { width: 100%; height: 170px; display: block; }
+  .info { padding: 14px 16px 16px; }
+  .num { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .name { font-size: 20px; font-weight: 800; margin: 2px 0 6px; }
+  .desc { font-size: 14px; color: var(--muted); line-height: 1.5; min-height: 42px; }
+  .best { margin-top: 10px; font-size: 13px; color: var(--gold); font-weight: 700; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); font-weight: 700; margin-right: 4px; }
+  .foot { margin-top: 32px; color: var(--muted); font-size: 13px; text-align: center; }
+  kbd { background: #1c2042; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; font-family: inherit; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>GAME ARCADE</h1>
+  <div class="sub">원하는 게임을 골라 보세요</div>
+  <div class="grid">
+    <a class="card" href="shooter.html" style="--accent:#5ee7ff">
+      <canvas data-icon="shooter"></canvas>
+      <div class="info">
+        <div class="num">1</div>
+        <div class="name">스카이 스트라이커 3D</div>
+        <div class="desc">적 편대와 거대 보스의 탄막을 뚫고 나아가는 비행기 슈팅</div>
+        <span class="tag">슈팅</span><span class="tag">3D</span>
+        <div class="best" data-key="skyStriker3dBest"></div>
+      </div>
+    </a>
+    <a class="card" href="breakout.html" style="--accent:#ff4fa3">
+      <canvas data-icon="breakout"></canvas>
+      <div class="info">
+        <div class="num">2</div>
+        <div class="name">네온 벽돌깨기</div>
+        <div class="desc">공을 튕겨 네온 벽돌을 깨부수세요. 멀티볼·레이저 아이템과 콤보</div>
+        <span class="tag">아케이드</span><span class="tag">퍼즐</span>
+        <div class="best" data-key="neonBreakoutBest"></div>
+      </div>
+    </a>
+    <a class="card" href="jumper.html" style="--accent:#ffd166">
+      <canvas data-icon="jumper"></canvas>
+      <div class="info">
+        <div class="num">3</div>
+        <div class="name">스카이 점퍼</div>
+        <div class="desc">발판을 밟고 하늘 끝, 우주까지 끝없이 올라가는 점프 게임</div>
+        <span class="tag">점프</span><span class="tag">무한</span>
+        <div class="best" data-key="skyJumperBest"></div>
+      </div>
+    </a>
+  </div>
+  <div class="foot"><kbd>←</kbd> <kbd>→</kbd> 또는 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>로 고르고 <kbd>Enter</kbd>로 시작 · 게임 화면에서 <kbd>Q</kbd>를 누르면 이곳으로 돌아와요</div>
+
+<script>
+(() => {
+  'use strict';
+  // best scores
+  document.querySelectorAll('.best').forEach(el => {
+    let v = 0;
+    try { v = +localStorage.getItem(el.dataset.key) || 0; } catch (e) {}
+    el.textContent = v ? '🏆 최고 점수 ' + v.toLocaleString() : '아직 기록 없음';
+  });
+
+  // keyboard selection
+  const cards = [...document.querySelectorAll('a.card')];
+  let sel = -1;
+  const select = i => { sel = (i + cards.length) % cards.length; cards.forEach((c, k) => c.classList.toggle('sel', k === sel)); cards[sel].focus({ preventScroll: false }); };
+  addEventListener('keydown', e => {
+    if (e.key >= '1' && e.key <= '3') { location.href = cards[+e.key - 1].getAttribute('href'); return; }
+    if (['ArrowRight', 'ArrowDown'].includes(e.key)) { e.preventDefault(); select(sel + 1); }
+    if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); select(sel < 0 ? cards.length - 1 : sel - 1); }
+    if (e.key === 'Enter' && sel >= 0) location.href = cards[sel].getAttribute('href');
+  });
+  cards.forEach((c, i) => c.addEventListener('mouseenter', () => { sel = i; cards.forEach((d, k) => d.classList.toggle('sel', k === i)); }));
+
+  // animated icons
+  const icons = [...document.querySelectorAll('canvas[data-icon]')].map(cv => ({ cv, ctx: cv.getContext('2d'), kind: cv.dataset.icon }));
+  function fit() {
+    const dpr = devicePixelRatio || 1;
+    for (const i of icons) { const r = i.cv.getBoundingClientRect(); i.w = r.width; i.h = r.height; i.cv.width = r.width * dpr; i.cv.height = r.height * dpr; i.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  }
+  addEventListener('resize', fit); fit();
+  const rr = (c, x, y, w, h, r) => { c.beginPath(); if (c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h); };
+
+  function shooter(c, w, h, t) {
+    const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#05030f'); g.addColorStop(1, '#141a4a'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+    for (let i = 0; i < 40; i++) { const x = (i * 97) % w, y = ((i * 53) + t * (40 + (i % 3) * 40)) % h; c.fillStyle = `rgba(200,215,255,${0.3 + (i % 3) * 0.2})`; c.fillRect(x, y, 2, 2 + (i % 3) * 2); }
+    const px = w / 2 + Math.sin(t * 1.2) * w * 0.25, py = h * 0.75;
+    c.fillStyle = '#9ff7ff';
+    for (let k = 0; k < 4; k++) { const by = py - 20 - ((t * 300 + k * 40) % 140); c.fillRect(px - 6, by, 3, 10); c.fillRect(px + 3, by, 3, 10); }
+    c.save(); c.translate(px, py);
+    c.fillStyle = '#3a7bd5'; c.beginPath(); c.moveTo(0, -6); c.lineTo(20, 10); c.lineTo(0, 6); c.lineTo(-20, 10); c.fill();
+    c.fillStyle = '#dfe9ff'; c.beginPath(); c.moveTo(0, -20); c.quadraticCurveTo(6, -4, 5, 12); c.lineTo(-5, 12); c.quadraticCurveTo(-6, -4, 0, -20); c.fill();
+    c.fillStyle = '#45e0ff'; c.beginPath(); c.ellipse(0, -7, 2.5, 5, 0, 0, 7); c.fill();
+    c.restore();
+    for (let k = 0; k < 3; k++) {
+      const ex = w * (0.25 + k * 0.25), ey = 34 + Math.sin(t * 2 + k) * 8;
+      c.fillStyle = '#ff5d73'; c.beginPath(); c.moveTo(ex, ey + 12); c.lineTo(ex + 11, ey - 6); c.lineTo(ex, ey - 2); c.lineTo(ex - 11, ey - 6); c.fill();
+    }
+  }
+  function breakout(c, w, h, t) {
+    c.fillStyle = '#0b0418'; c.fillRect(0, 0, w, h);
+    const cols = 8, bw = (w - 20) / cols;
+    const hues = [320, 280, 190, 160];
+    for (let r = 0; r < 4; r++) for (let k = 0; k < cols; k++) {
+      if ((r * 3 + k * 5 + Math.floor(t * 0.8)) % 7 === 0) continue;
+      c.fillStyle = `hsl(${hues[r]},100%,60%)`; rr(c, 10 + k * bw + 1, 14 + r * 16, bw - 2, 12, 3); c.fill();
+    }
+    const bx = w / 2 + Math.sin(t * 1.7) * (w / 2 - 20), by = h * 0.55 + Math.sin(t * 3.4) * 22;
+    c.shadowColor = '#fff'; c.shadowBlur = 14; c.fillStyle = '#fff'; c.beginPath(); c.arc(bx, by, 6, 0, 7); c.fill();
+    c.shadowColor = '#38f9ff'; c.shadowBlur = 16;
+    const g = c.createLinearGradient(bx - 40, 0, bx + 40, 0); g.addColorStop(0, '#ff3cac'); g.addColorStop(0.5, '#38f9ff'); g.addColorStop(1, '#ff3cac');
+    c.fillStyle = g; rr(c, bx - 40, h - 26, 80, 10, 5); c.fill(); c.shadowBlur = 0;
+  }
+  function jumper(c, w, h, t) {
+    const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ff7e5f'); g.addColorStop(1, '#6ec6ff'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+    c.fillStyle = 'rgba(255,255,255,0.6)';
+    for (let i = 0; i < 3; i++) { const y = ((i * 70 + t * 20) % (h + 40)) - 20; c.beginPath(); c.ellipse((i * 113) % w + 30, y, 34, 10, 0, 0, 7); c.fill(); }
+    const plats = [[0.2, 0.85, '#4caf50'], [0.62, 0.6, '#2f80ed'], [0.3, 0.35, '#4caf50'], [0.72, 0.14, '#a0522d']];
+    for (const [px, py, col] of plats) { c.fillStyle = col; rr(c, w * px - 30, h * py, 60, 10, 5); c.fill(); }
+    const ph = (t * 0.9) % 1, seg = Math.floor((t * 0.9) % 3);
+    const from = plats[seg], to = plats[seg + 1];
+    const x = w * (from[0] + (to[0] - from[0]) * ph), yb = h * (from[1] + (to[1] - from[1]) * ph) - Math.sin(ph * Math.PI) * 50 - 14;
+    c.fillStyle = '#ffb703'; c.strokeStyle = '#c77d00'; c.lineWidth = 2;
+    c.beginPath(); c.ellipse(x, yb, 14, 13, 0, 0, 7); c.fill(); c.stroke();
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(x - 4, yb - 3, 4, 0, 7); c.arc(x + 5, yb - 3, 4, 0, 7); c.fill();
+    c.fillStyle = '#222'; c.beginPath(); c.arc(x - 3, yb - 4, 2, 0, 7); c.arc(x + 6, yb - 4, 2, 0, 7); c.fill();
+  }
+  const draw = { shooter, breakout, jumper };
+  let t0 = performance.now();
+  (function loop(now) {
+    const t = (now - t0) / 1000;
+    for (const i of icons) draw[i.kind](i.ctx, i.w, i.h, t);
+    requestAnimationFrame(loop);
+  })(t0);
+})();
+</script>
+</body>
+</html>
